@@ -1,8 +1,8 @@
 package com.example.application.views.list;
 
-import com.example.application.data.entity.Company;
-import com.example.application.data.entity.Contact;
-import com.example.application.data.entity.Status;
+import com.example.application.data.Company;
+import com.example.application.data.Contact;
+import com.example.application.data.Status;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
@@ -20,8 +20,8 @@ import com.vaadin.flow.shared.Registration;
 
 import java.util.List;
 
-public class ContactForm extends FormLayout { 
-  TextField firstName = new TextField("First name"); 
+public class ContactForm extends FormLayout {
+  TextField firstName = new TextField("First name");
   TextField lastName = new TextField("Last name");
   EmailField email = new EmailField("Email");
   ComboBox<Status> status = new ComboBox<>("Status");
@@ -42,7 +42,7 @@ public class ContactForm extends FormLayout {
     status.setItems(statuses);
     status.setItemLabelGenerator(Status::getName);
 
-    add(firstName, 
+    add(firstName,
         lastName,
         email,
         company,

@@ -1,8 +1,8 @@
 package com.example.application.views.list;
 
-import com.example.application.data.entity.Company;
-import com.example.application.data.entity.Contact;
-import com.example.application.data.entity.Status;
+import com.example.application.data.Company;
+import com.example.application.data.Contact;
+import com.example.application.data.Status;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,7 @@ public class ContactFormTest {
     private Status status1;
     private Status status2;
 
-    @BeforeEach  
+    @BeforeEach
     public void setupData() {
         companies = new ArrayList<>();
         company1 = new Company();

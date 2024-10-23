@@ -4,6 +4,9 @@ This repository contains the source code for the [Building Modern Web Applicatio
 
 *Live demo:* https://crm.demo.vaadin.com
 
+## Running the Application
+There are two ways to run the application:  using `mvn` or by running the `Application` class directly from your IDE.
+
 ## Branches
 
 - The main branch contains the source code for the latest Vaadin release
