@@ -200,3 +200,14 @@ functions.set("event,element,return (event.location)",
     function(event,element) {return (event.location)});
 functions.set("event,element,return ((['Escape','Esc'].indexOf(event.code) !== -1 || ['Escape','Esc'].indexOf(event.key) !== -1) && !event.getModifierState('Shift') && !event.getModifierState('Control') && !event.getModifierState('Alt') && !event.getModifierState('AltGraph') && !event.getModifierState('Meta') && (event.stopPropagation() || true))",
     function(event,element) {return ((['Escape','Esc'].indexOf(event.code) !== -1 || ['Escape','Esc'].indexOf(event.key) !== -1) && !event.getModifierState('Shift') && !event.getModifierState('Control') && !event.getModifierState('Alt') && !event.getModifierState('AltGraph') && !event.getModifierState('Meta') && (event.stopPropagation() || true))});
+functions.set("$0,if(window.Vaadin.Flow.navigation) { window.addEventListener('vaadin-navigated', function(event) {    document.title = $0;\n    if(window?.Vaadin?.documentTitleSignal) {\n        window.Vaadin.documentTitleSignal.value = $0;\n    }\n}, {once:true}); }  else {     document.title = $0;\n    if(window?.Vaadin?.documentTitleSignal) {\n        window.Vaadin.documentTitleSignal.value = $0;\n    }\n }",
+function($0) {if(window.Vaadin.Flow.navigation) { window.addEventListener('vaadin-navigated', function(event) {    document.title = $0;
+  if(window?.Vaadin?.documentTitleSignal) {
+    window.Vaadin.documentTitleSignal.value = $0;
+  }
+}, {once:true}); }  else {     document.title = $0;
+  if(window?.Vaadin?.documentTitleSignal) {
+    window.Vaadin.documentTitleSignal.value = $0;
+  }
+}});
+
