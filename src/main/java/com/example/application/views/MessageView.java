@@ -2,6 +2,8 @@ package com.example.application.views;
 
 import java.util.List;
 
+import com.example.application.data.WebPushAction;
+import com.example.application.data.WebPushOptions;
 import com.example.application.data.PushSubscription;
 import com.example.application.services.CrmService;
 import jakarta.annotation.security.RolesAllowed;
@@ -22,6 +24,11 @@ import com.vaadin.flow.server.webpush.WebPushMessage;
 @PageTitle("WebPush Message | Vaadin CRM")
 public class MessageView extends VerticalLayout {
     private final CrmService service;
+
+    private final WebPushAction webPushAction = new WebPushAction(
+            "dashboard",
+            "Open Dashboard"
+    );
 
     public MessageView(CrmService service) {
         this.service = service;
@@ -49,17 +56,22 @@ public class MessageView extends VerticalLayout {
         title.setTooltipText("Tip: Add '{}' to include username to title string");
         TextArea message = new TextArea("Message");
 
-        Button send = new Button("Send", event -> {
-            new Thread(() -> {
-                for (PushSubscription subscription : registeredUsers.getSelectedItems()) {
-                    String titleValue = title.getValue().replace("{}", subscription.getUserName());
-                    service.getWebPush().sendNotification(
-                            subscription.createSubscription(),
-                            new WebPushMessage(titleValue, message.getValue())
-                    );
-                }
-            }).start();
-        });
+        Button send = new Button("Send", event -> new Thread(() -> {
+            for (PushSubscription subscription : registeredUsers.getSelectedItems()) {
+                String titleValue = title.getValue().replace("{}", subscription.getUserName());
+                WebPushOptions webPushOptions = new WebPushOptions(
+                        message.getValue(),
+                        List.of(webPushAction),
+                        "This is my data",
+                        "https://upload.wikimedia.org/wikipedia/commons/0/0e/Message-icon-blue-symbol-double.png"
+                );
+
+                service.getWebPush().sendNotification(
+                        subscription.createSubscription(),
+                        new WebPushMessage(titleValue, webPushOptions)
+                );
+            }
+        }).start());
 
         selectAll.getStyle().setMargin("0 10px");
 
