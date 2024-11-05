@@ -2,8 +2,8 @@ package com.example.application.views;
 
 import java.util.List;
 
-import com.example.application.data.entity.PushSubscription;
-import com.example.application.data.service.CrmService;
+import com.example.application.data.PushSubscription;
+import com.example.application.services.CrmService;
 import jakarta.annotation.security.RolesAllowed;
 
 import com.vaadin.flow.component.Component;
@@ -16,7 +16,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.webpush.WebPushMessage;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 
 @RolesAllowed("ADMIN")
 @Route(value = "message", layout = MainLayout.class)

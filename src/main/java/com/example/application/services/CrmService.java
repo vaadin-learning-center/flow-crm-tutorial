@@ -1,13 +1,13 @@
 package com.example.application.services;
 
-import com.example.application.data.entity.Company;
-import com.example.application.data.entity.Contact;
-import com.example.application.data.entity.PushSubscription;
-import com.example.application.data.entity.Status;
-import com.example.application.data.repository.CompanyRepository;
-import com.example.application.data.repository.ContactRepository;
+import com.example.application.data.Company;
+import com.example.application.data.Contact;
+import com.example.application.data.PushSubscription;
+import com.example.application.data.Status;
+import com.example.application.data.CompanyRepository;
+import com.example.application.data.ContactRepository;
 import com.example.application.data.repository.PushSubscriptionRepository;
-import com.example.application.data.repository.StatusRepository;
+import com.example.application.data.StatusRepository;
 import nl.martijndwars.webpush.Subscription;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -145,7 +145,7 @@ public class CrmService {
             // Do not add a subscription if one already in db for user.
             return;
         }
-        pushSubscriptionRepository.save(new PushSubscription(userName, subscription.endpoint, subscription.keys.p256dh, subscription.keys.auth));
+        pushSubscriptionRepository.save(new PushSubscription(userName, subscription.endpoint(), subscription.keys().p256dh(), subscription.keys().auth()));
         getPushSubscription(userName);
     }
 

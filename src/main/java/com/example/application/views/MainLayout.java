@@ -2,8 +2,8 @@ package com.example.application.views;
 
 import java.util.Optional;
 
-import com.example.application.data.entity.PushSubscription;
-import com.example.application.data.service.CrmService;
+import com.example.application.data.PushSubscription;
+import com.example.application.services.CrmService;
 import com.example.application.security.SecurityService;
 import com.example.application.views.list.ListView;
 import nl.martijndwars.webpush.Subscription;

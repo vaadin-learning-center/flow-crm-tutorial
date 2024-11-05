@@ -1,4 +1,4 @@
-package com.example.application.data.entity;
+package com.example.application.data;
 
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotEmpty;
@@ -44,9 +44,9 @@ public class PushSubscription extends AbstractEntity {
     }
 
     public boolean equalsSubscription(Subscription subscription) {
-        return  endpoint.equals(subscription.endpoint)
-                && p256dh.equals(subscription.keys.p256dh)
-                && auth.equals(subscription.keys.auth);
+        return  endpoint.equals(subscription.endpoint())
+                && p256dh.equals(subscription.keys().p256dh())
+                && auth.equals(subscription.keys().auth());
     }
 
     public Subscription createSubscription() {
