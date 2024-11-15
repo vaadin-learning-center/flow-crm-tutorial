@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.example.application.data.WebPushAction;
 import com.example.application.data.WebPushOptions;
-import com.example.application.data.PushSubscription;
+import com.example.application.data.PushSubscriptionEntity;
 import com.example.application.services.CrmService;
 import jakarta.annotation.security.RolesAllowed;
 
@@ -39,16 +39,16 @@ public class MessageView extends VerticalLayout {
     }
 
     private Component getMessageBuilder() {
-        List<PushSubscription> allSubscriptions = service.getAllSubscriptions();
+        List<PushSubscriptionEntity> allSubscriptions = service.getAllSubscriptions();
 
         if (allSubscriptions.isEmpty()) {
             // If no subscriptions do not populate message view and inform user.
             return new Span("No web push message subscriptions.");
         }
 
-        MultiSelectComboBox<PushSubscription> registeredUsers = new MultiSelectComboBox<>("Send to");
+        MultiSelectComboBox<PushSubscriptionEntity> registeredUsers = new MultiSelectComboBox<>("Send to");
         registeredUsers.setItems(allSubscriptions);
-        registeredUsers.setItemLabelGenerator(PushSubscription::getUserName);
+        registeredUsers.setItemLabelGenerator(PushSubscriptionEntity::getUserName);
 
         Button selectAll = new Button("Select all", event -> registeredUsers.select(allSubscriptions));
 
@@ -57,7 +57,7 @@ public class MessageView extends VerticalLayout {
         TextArea message = new TextArea("Message");
 
         Button send = new Button("Send", event -> new Thread(() -> {
-            for (PushSubscription subscription : registeredUsers.getSelectedItems()) {
+            for (PushSubscriptionEntity subscription : registeredUsers.getSelectedItems()) {
                 String titleValue = title.getValue().replace("{}", subscription.getUserName());
                 WebPushOptions webPushOptions = new WebPushOptions(
                         message.getValue(),
