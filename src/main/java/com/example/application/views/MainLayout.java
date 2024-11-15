@@ -2,11 +2,11 @@ package com.example.application.views;
 
 import java.util.Optional;
 
-import com.example.application.data.PushSubscription;
+import com.example.application.data.WebPushSubscriptionEntity;
 import com.example.application.services.CrmService;
 import com.example.application.security.SecurityService;
 import com.example.application.views.list.ListView;
-import nl.martijndwars.webpush.Subscription;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +20,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.RouterLink;
+import com.vaadin.flow.server.webpush.WebPushSubscription;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 public class MainLayout extends AppLayout {
@@ -27,7 +28,7 @@ public class MainLayout extends AppLayout {
     private final CrmService crmService;
 
     private ToggleButton notifications;
-    private Subscription clientSubscription;
+    private WebPushSubscription clientSubscription;
     private boolean storeClientSub = false;
 
     public MainLayout(SecurityService securityService, CrmService crmService) {
@@ -132,8 +133,8 @@ public class MainLayout extends AppLayout {
     }
 
     private void checkSubscriptionMatchForClientSubscription(
-            Subscription subscription) {
-        Optional<PushSubscription> matchingSubscription = crmService.getAllSubscriptions()
+            WebPushSubscription subscription) {
+        Optional<WebPushSubscriptionEntity> matchingSubscription = crmService.getAllSubscriptions()
                 .stream().filter(sub -> sub.equalsSubscription(subscription))
                 .findFirst();
         // If no DB subscription exists for this client subscription register for current user.
@@ -144,7 +145,7 @@ public class MainLayout extends AppLayout {
         }
     }
 
-    private void checkClientAndDBSubscriptionMatch(Subscription subscription) {
+    private void checkClientAndDBSubscriptionMatch(WebPushSubscription subscription) {
         String username = securityService.getAuthenticatedUser().getUsername();
 
         // User client subscription if user turns on if it wasn't for the current user.

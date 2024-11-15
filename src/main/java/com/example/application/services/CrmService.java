@@ -2,13 +2,13 @@ package com.example.application.services;
 
 import com.example.application.data.Company;
 import com.example.application.data.Contact;
-import com.example.application.data.PushSubscription;
+import com.example.application.data.WebPushSubscriptionEntity;
 import com.example.application.data.Status;
 import com.example.application.data.CompanyRepository;
 import com.example.application.data.ContactRepository;
-import com.example.application.data.repository.PushSubscriptionRepository;
+import com.example.application.data.PushSubscriptionRepository;
 import com.example.application.data.StatusRepository;
-import nl.martijndwars.webpush.Subscription;
+
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Optional;
 
 import com.vaadin.flow.server.webpush.WebPush;
+import com.vaadin.flow.server.webpush.WebPushKeys;
+import com.vaadin.flow.server.webpush.WebPushSubscription;
 
 @Service
 public class CrmService {
@@ -85,71 +87,72 @@ public class CrmService {
     }
 
     public boolean hasMultipleSubscriptions(String userName) {
-        List<PushSubscription> all = pushSubscriptionRepository.findAll();
-        Optional<PushSubscription> first = all.stream().filter(sub -> sub.getUserName().equals(userName)).findFirst();
+        List<WebPushSubscriptionEntity> all = pushSubscriptionRepository.findAll();
+        Optional<WebPushSubscriptionEntity> first = all.stream().filter(sub -> sub.getUserName().equals(userName)).findFirst();
         if(first.isPresent()) {
             return all.stream().filter(sub -> subscriptionsEqual(sub, first.get()) && !sub.getUserName().equals(userName)).count() > 0;
         }
         return false;
     }
 
-    private boolean subscriptionsEqual(PushSubscription sub, PushSubscription pushSubscription) {
-        return sub.getEndpoint().equals(pushSubscription.getEndpoint()) &&
-                sub.getAuth().equals(pushSubscription.getAuth()) &&
-                sub.getP256dh().equals(pushSubscription.getP256dh());
+    private boolean subscriptionsEqual(WebPushSubscriptionEntity sub, WebPushSubscriptionEntity webPushSubscriptionEntity) {
+        return sub.getEndpoint().equals(webPushSubscriptionEntity.getEndpoint()) &&
+               sub.getAuth().equals(webPushSubscriptionEntity.getAuth()) &&
+               sub.getP256dh().equals(webPushSubscriptionEntity.getP256dh());
     }
 
-    public Subscription getSubscription(String userName) {
-        PushSubscription pushSubscription = getPushSubscription(userName);
-        if(pushSubscription != null) {
-            return new Subscription(pushSubscription.getEndpoint(), new Subscription.Keys(pushSubscription.getP256dh(), pushSubscription.getAuth()));
+    public WebPushSubscription getSubscription(String userName) {
+        WebPushSubscriptionEntity webPushSubscriptionEntity = getPushSubscription(userName);
+        if(webPushSubscriptionEntity != null) {
+            return new WebPushSubscription(webPushSubscriptionEntity.getEndpoint(), new WebPushKeys(webPushSubscriptionEntity.getP256dh(), webPushSubscriptionEntity.getAuth()));
         }
         return null;
     }
 
     public void removeSubscription(String userName) {
-        PushSubscription pushSubscription = getPushSubscription(userName);
-        if(pushSubscription != null) {
-            pushSubscriptionRepository.delete(pushSubscription);
+        WebPushSubscriptionEntity webPushSubscriptionEntity = getPushSubscription(userName);
+        if(webPushSubscriptionEntity != null) {
+            pushSubscriptionRepository.delete(webPushSubscriptionEntity);
         }
     }
 
-    public void removeSubscription(String userName, Subscription subscription) {
+    public void removeSubscription(String userName, WebPushSubscription subscription) {
         if(subscription == null) {
             LoggerFactory.getLogger(CrmService.class).info("Removing user subscription without client match.");
             removeSubscription(userName);
             return;
         }
-        Optional<PushSubscription> pushSubscription = getPushSubscriptions(userName).stream().filter(sub -> sub.equalsSubscription(subscription)).findFirst();
+        Optional<WebPushSubscriptionEntity> pushSubscription = getPushSubscriptions(userName).stream().filter(sub -> sub.equalsSubscription(subscription)).findFirst();
         if(pushSubscription.isPresent()) {
             pushSubscriptionRepository.delete(pushSubscription.get());
         }
     }
 
-    public List<PushSubscription> getPushSubscriptions(String userName) {
+    public List<WebPushSubscriptionEntity> getPushSubscriptions(String userName) {
         return pushSubscriptionRepository.findPushSubscriptionByUserName(userName);
     }
 
-    private PushSubscription getPushSubscription(String userName) {
-        Optional<PushSubscription> subscription = getPushSubscriptions(userName).stream().findFirst();
+    private WebPushSubscriptionEntity getPushSubscription(String userName) {
+        Optional<WebPushSubscriptionEntity> subscription = getPushSubscriptions(userName).stream().findFirst();
         if(subscription.isPresent()) {
             return subscription.get();
         }
         return null;
     }
 
-    public void addSubscription(String userName, Subscription subscription) {
-        PushSubscription existingSubscription = getPushSubscription(userName);
+    public void addSubscription(String userName, WebPushSubscription subscription) {
+        WebPushSubscriptionEntity existingSubscription = getPushSubscription(userName);
         if (existingSubscription != null
                 && existingSubscription.equalsSubscription(subscription)) {
             // Do not add a subscription if one already in db for user.
             return;
         }
-        pushSubscriptionRepository.save(new PushSubscription(userName, subscription.endpoint(), subscription.keys().p256dh(), subscription.keys().auth()));
+        pushSubscriptionRepository.save(new WebPushSubscriptionEntity(userName,
+                subscription.endpoint(), subscription.keys().p256dh(), subscription.keys().auth()));
         getPushSubscription(userName);
     }
 
-    public List<PushSubscription> getAllSubscriptions() {
+    public List<WebPushSubscriptionEntity> getAllSubscriptions() {
         return pushSubscriptionRepository.findAll();
     }
 }

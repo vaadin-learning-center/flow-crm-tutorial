@@ -2,10 +2,12 @@ package com.example.application.data;
 
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotEmpty;
-import nl.martijndwars.webpush.Subscription;
+
+import com.vaadin.flow.server.webpush.WebPushKeys;
+import com.vaadin.flow.server.webpush.WebPushSubscription;
 
 @Entity
-public class PushSubscription extends AbstractEntity {
+public class WebPushSubscriptionEntity extends AbstractEntity {
 
     @NotEmpty
     private String userName;
@@ -16,11 +18,11 @@ public class PushSubscription extends AbstractEntity {
     @NotEmpty
     private String auth;
 
-    public PushSubscription() {
+    public WebPushSubscriptionEntity() {
 
     }
 
-    public PushSubscription(String user, String endpoint, String p256dh, String auth) {
+    public WebPushSubscriptionEntity(String user, String endpoint, String p256dh, String auth) {
         this.userName = user;
         this.endpoint = endpoint;
         this.p256dh = p256dh;
@@ -43,13 +45,13 @@ public class PushSubscription extends AbstractEntity {
         return auth;
     }
 
-    public boolean equalsSubscription(Subscription subscription) {
+    public boolean equalsSubscription(WebPushSubscription subscription) {
         return  endpoint.equals(subscription.endpoint())
                 && p256dh.equals(subscription.keys().p256dh())
                 && auth.equals(subscription.keys().auth());
     }
 
-    public Subscription createSubscription() {
-        return new Subscription(getEndpoint(), new Subscription.Keys(getP256dh(), getAuth()));
+    public WebPushSubscription createSubscription() {
+        return new WebPushSubscription(getEndpoint(), new WebPushKeys(getP256dh(), getAuth()));
     }
 }

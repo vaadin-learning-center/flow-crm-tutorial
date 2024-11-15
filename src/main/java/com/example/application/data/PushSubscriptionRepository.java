@@ -1,11 +1,10 @@
-package com.example.application.data.repository;
+package com.example.application.data;
 
 import java.util.List;
 
-import com.example.application.data.PushSubscription;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface PushSubscriptionRepository extends JpaRepository<PushSubscription, Long> {
+public interface PushSubscriptionRepository extends JpaRepository<WebPushSubscriptionEntity, Long> {
 
-    List<PushSubscription> findPushSubscriptionByUserName(String userName);
+    List<WebPushSubscriptionEntity> findPushSubscriptionByUserName(String userName);
 }

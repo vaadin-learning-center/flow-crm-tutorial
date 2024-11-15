@@ -11,7 +11,7 @@
 
     <properties>
         <java.version>17</java.version>
-        <vaadin.version>24.6.0.alpha2</vaadin.version>
+        <vaadin.version>24.6.0.alpha3</vaadin.version>
     </properties>
 
     <parent>
@@ -69,7 +69,7 @@
             <dependency>
                 <groupId>com.vaadin</groupId>
                 <artifactId>flow-bom</artifactId>
-                <version>24.6.0.alpha3</version>
+                <version>24.6-SNAPSHOT</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
