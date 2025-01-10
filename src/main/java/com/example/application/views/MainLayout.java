@@ -39,14 +39,15 @@ public class MainLayout extends AppLayout {
             LumoUtility.Padding.Vertical.NONE,
             LumoUtility.Padding.Horizontal.MEDIUM);
 
-        addToNavbar(header); 
+        addToNavbar(header);
 
     }
 
     private void createDrawer() {
         addToDrawer(new VerticalLayout(
                 new RouterLink("List", ListView.class),
-                new RouterLink("Dashboard", DashboardView.class)
+                new RouterLink("Dashboard", DashboardView.class),
+                new RouterLink("CRUD", PageableCrudView.class)
         ));
     }
 }
