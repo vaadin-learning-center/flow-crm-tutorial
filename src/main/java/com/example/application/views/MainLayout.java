@@ -42,12 +42,17 @@ public class MainLayout extends AppLayout {
     @Autowired
     private SecurityContextHolderStrategy securityContextHolderStrategy;
 
+    private VerticalLayout menuItems = new VerticalLayout();
+
     private Span helloUser = new Span("Welcome, Anonymous!");
 
     public MainLayout(SecurityService securityService) {
         this.securityService = securityService;
         createHeader();
-        createDrawer();
+
+
+        addToDrawer(menuItems);
+        updateDrawer();
     }
 
     private void createHeader() {
@@ -68,26 +73,34 @@ public class MainLayout extends AppLayout {
 
         Button impersonate = new Button("Impersonate user", e -> {
             UserDetails user = userDetailsService.loadUserByUsername("user");
-            e.getSource().getUI().ifPresent(ui -> {
-                impersonate(user, (VaadinServletRequest) VaadinRequest.getCurrent());
-            });
+            impersonate(user, (VaadinServletRequest) VaadinRequest.getCurrent());
         });
 
-        header.add(impersonate);
+        Button exitImpersonation = new Button("Exit impersonation", e -> {
+            exitImpersonated((VaadinServletRequest) VaadinRequest.getCurrent());
+        });
+
+        header.add(impersonate, exitImpersonation);
 
 
         addToNavbar(header);
 
     }
 
-    private void createDrawer() {
-        RouterLink listLink = new RouterLink("List", ListView.class);
-        listLink.setHighlightCondition(HighlightConditions.sameLocation());
+    private void updateDrawer() {
 
-        addToDrawer(new VerticalLayout(
-            listLink,
-            new RouterLink("Dashboard", DashboardView.class)
-        ));
+        menuItems.removeAll();
+
+        if (SecurityService.userInRole("ROLE_ADMIN")) {
+            RouterLink dashboardLink = new RouterLink("Dashboard", DashboardView.class);
+            menuItems.add(dashboardLink);
+        }
+
+        if (SecurityService.userInRole("ROLE_USER")) {
+            RouterLink listLink = new RouterLink("List", ListView.class);
+            listLink.setHighlightCondition(HighlightConditions.sameLocation());
+            menuItems.add(listLink);
+        }
     }
 
     private void impersonate(UserDetails targetUser, VaadinServletRequest request) {
@@ -97,6 +110,22 @@ public class MainLayout extends AppLayout {
         context.setAuthentication(targetUserRequest);
         this.securityContextHolderStrategy.setContext(context);
         updateUserName(targetUser);
+        updateDrawer();
+        UI.getCurrent().getPage().setLocation("/");
+    }
+
+    private void exitImpersonated(VaadinServletRequest request) {
+        Authentication current = this.securityContextHolderStrategy.getContext().getAuthentication();
+        if (current == null) {
+            throw new RuntimeException("Cannot exit impersonation: no current user");
+        }
+        Authentication original = getSourceAuthentication(current);
+        SecurityContext context = this.securityContextHolderStrategy.createEmptyContext();
+        context.setAuthentication(original);
+        this.securityContextHolderStrategy.setContext(context);
+        updateUserName(original.getPrincipal() instanceof UserDetails ? (UserDetails) original.getPrincipal() : null);
+        updateDrawer();
+        UI.getCurrent().getPage().setLocation("/dashboard");
     }
 
     private UsernamePasswordAuthenticationToken createSwitchUserToken(HttpServletRequest request,
@@ -121,5 +150,18 @@ public class MainLayout extends AppLayout {
         } else {
             helloUser.setText("Welcome, Anonymous!");
         }
+    }
+
+    private Authentication getSourceAuthentication(Authentication current) {
+        Authentication original = null;
+        // iterate over granted authorities and find the 'switch user' authority
+        Collection<? extends GrantedAuthority> authorities = current.getAuthorities();
+        for (GrantedAuthority auth : authorities) {
+            // check for switch user type of authority
+            if (auth instanceof SwitchUserGrantedAuthority) {
+                original = ((SwitchUserGrantedAuthority) auth).getSource();
+            }
+        }
+        return original;
     }
 }

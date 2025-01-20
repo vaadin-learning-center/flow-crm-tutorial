@@ -1,5 +1,7 @@
 package com.example.application.security;
 
+import java.util.Optional;
+
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.VaadinServletRequest;
 import org.springframework.security.core.context.SecurityContext;
@@ -13,7 +15,7 @@ public class SecurityService {
 
     private static final String LOGOUT_SUCCESS_URL = "/";
 
-    public UserDetails getAuthenticatedUser() {
+    public static UserDetails getAuthenticatedUser() {
         SecurityContext context = SecurityContextHolder.getContext();
         Object principal = context.getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
@@ -29,5 +31,14 @@ public class SecurityService {
         logoutHandler.logout(
                 VaadinServletRequest.getCurrent().getHttpServletRequest(), null,
                 null);
+    }
+
+    public static boolean userInRole(String role) {
+        UserDetails authenticatedUser = getAuthenticatedUser();
+        if (authenticatedUser == null) {
+            return false;
+        }
+        return authenticatedUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(role));
     }
 }
