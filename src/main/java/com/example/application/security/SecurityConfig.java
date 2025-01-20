@@ -5,11 +5,15 @@ import java.util.Collections;
 import com.example.application.views.LoginView;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import com.vaadin.flow.spring.security.VaadinWebSecurity;
 
@@ -22,6 +26,9 @@ public class SecurityConfig extends VaadinWebSecurity {
       createUser(new User("user",
               "{noop}userpass",
               Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"))));
+      createUser(new User("admin",
+              "{noop}adminpass",
+              Collections.singleton(new SimpleGrantedAuthority("ROLE_ADMIN"))));
     }
   }
 
@@ -29,6 +36,9 @@ public class SecurityConfig extends VaadinWebSecurity {
   protected void configure(HttpSecurity http) throws Exception {
     // Authorize access to /images/ without authentication
     http.authorizeRequests().antMatchers("/images/**").permitAll();
+    http.authorizeRequests().antMatchers(HttpMethod.GET, "/impersonate*").hasRole("ADMIN");
+    http.authorizeRequests().antMatchers(HttpMethod.GET, "/exit-impersonate*").authenticated();
+
     // Set default security policy that permits Vaadin internal requests and
     // denies all other
     super.configure(http);
@@ -38,5 +48,16 @@ public class SecurityConfig extends VaadinWebSecurity {
   @Bean
   public InMemoryUserDetailsManager userDetailsService() {
     return new CrmInMemoryUserDetailsManager();
+  }
+
+  @Bean
+  public SwitchUserFilter switchUserFilter(UserDetailsService userDetailsService) {
+    SwitchUserFilter filter = new SwitchUserFilter();
+    filter.setUserDetailsService(userDetailsService);
+    filter.setSwitchUserUrl("/impersonate");
+    filter.setExitUserUrl("/exit-impersonate");
+    filter.setTargetUrl("/");
+    filter.setSwitchUserMatcher(new AntPathRequestMatcher("/impersonate", "GET"));
+    return filter;
   }
 }

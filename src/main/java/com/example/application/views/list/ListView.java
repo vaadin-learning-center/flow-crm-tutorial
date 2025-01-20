@@ -16,13 +16,14 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 
 
 @Component
 @Scope("prototype")
 @Route(value="", layout = MainLayout.class)
 @PageTitle("Contacts | Vaadin CRM")
-@PermitAll
+@RolesAllowed("ROLE_USER")
 public class ListView extends VerticalLayout {
     Grid<Contact> grid = new Grid<>(Contact.class);
     TextField filterText = new TextField();
