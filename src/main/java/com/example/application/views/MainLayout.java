@@ -1,9 +1,9 @@
 package com.example.application.views;
 
 import javax.servlet.http.HttpServletRequest;
-
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,7 +15,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -125,9 +124,11 @@ public class MainLayout extends AppLayout {
     private void impersonate(UserDetails targetUser, VaadinServletRequest request) {
         UsernamePasswordAuthenticationToken targetUserRequest =
                 createSwitchUserToken(request.getHttpServletRequest(), targetUser);
+        // TODO: Before switching, a check should be made on whether the user is already impersonated.
         SecurityContext context = this.securityContextHolderStrategy.createEmptyContext();
         context.setAuthentication(targetUserRequest);
         this.securityContextHolderStrategy.setContext(context);
+        // TODO: redirect, context persistence and other stuff should be done in an impersonation listener
         UI.getCurrent().getPage().setLocation("/list");
     }
 
@@ -138,6 +139,7 @@ public class MainLayout extends AppLayout {
         SecurityContext context = this.securityContextHolderStrategy.createEmptyContext();
         context.setAuthentication(original);
         this.securityContextHolderStrategy.setContext(context);
+        // TODO: redirect, context persistence and other stuff should be done in an impersonation listener
         UI.getCurrent().getPage().setLocation("/");
     }
 
@@ -164,12 +166,25 @@ public class MainLayout extends AppLayout {
         }
         Collection<? extends GrantedAuthority> targetUserAuthorities = targetUser.getAuthorities();
         List<GrantedAuthority> switchUserAuthoritiesList = new ArrayList<>(targetUserAuthorities);
-        for (GrantedAuthority authority : currentAuthentication.getAuthorities()) {
-            GrantedAuthority currentUserAuthorities = new SwitchUserGrantedAuthority(authority.getAuthority(),
-                    currentAuthentication);
-            switchUserAuthoritiesList.add(currentUserAuthorities);
-        }
+        switchUserAuthoritiesList.addAll(getOriginalAuthorities(currentAuthentication));
         return switchUserAuthoritiesList;
+    }
+
+    private Collection<GrantedAuthority> getOriginalAuthorities(Authentication currentAuthentication) {
+//        List<GrantedAuthority> currentAuthoritiesList = new ArrayList<>();
+//        for (GrantedAuthority authority : currentAuthentication.getAuthorities()) {
+//            GrantedAuthority currentUserGrantedAuthority = new SwitchUserGrantedAuthority(authority.getAuthority(),
+//                    currentAuthentication);
+//            currentAuthoritiesList.add(currentUserGrantedAuthority);
+//        }
+//        return currentAuthoritiesList;
+
+        // by default this adds some non-existing role,
+        // so that the original authorities are not taken into account, i.e.
+        // a user cannot act as admin after impersonation.
+        // This however can be changed by adding all current authorities.
+        return Collections.singleton(new SwitchUserGrantedAuthority(
+                "ROLE_PREVIOUS_ADMINISTRATOR", currentAuthentication));
     }
 
     private Optional<Authentication> getOriginalAuthentication(Authentication currentAuthentication) {
