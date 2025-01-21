@@ -69,16 +69,15 @@ public class MainLayout extends AppLayout {
         header.addClassNames("py-0", "px-m");
 
         header.add(helloUser);
-        updateUserName(securityService.getAuthenticatedUser());
+        updateUserName(SecurityService.getAuthenticatedUser());
 
         Button impersonate = new Button("Impersonate user", e -> {
             UserDetails user = userDetailsService.loadUserByUsername("user");
             impersonate(user, (VaadinServletRequest) VaadinRequest.getCurrent());
         });
 
-        Button exitImpersonation = new Button("Exit impersonation", e -> {
-            exitImpersonated((VaadinServletRequest) VaadinRequest.getCurrent());
-        });
+        Button exitImpersonation = new Button("Exit impersonation", e ->
+                exitImpersonated());
 
         header.add(impersonate, exitImpersonation);
 
@@ -109,39 +108,48 @@ public class MainLayout extends AppLayout {
         SecurityContext context = this.securityContextHolderStrategy.createEmptyContext();
         context.setAuthentication(targetUserRequest);
         this.securityContextHolderStrategy.setContext(context);
-        updateUserName(targetUser);
-        updateDrawer();
         UI.getCurrent().getPage().setLocation("/");
     }
 
-    private void exitImpersonated(VaadinServletRequest request) {
+    private void exitImpersonated() {
         Authentication current = this.securityContextHolderStrategy.getContext().getAuthentication();
         if (current == null) {
             throw new RuntimeException("Cannot exit impersonation: no current user");
         }
-        Authentication original = getSourceAuthentication(current);
+        Authentication original = getOriginalAuthentication(current);
         SecurityContext context = this.securityContextHolderStrategy.createEmptyContext();
         context.setAuthentication(original);
         this.securityContextHolderStrategy.setContext(context);
-        updateUserName(original.getPrincipal() instanceof UserDetails ? (UserDetails) original.getPrincipal() : null);
-        updateDrawer();
         UI.getCurrent().getPage().setLocation("/dashboard");
     }
 
     private UsernamePasswordAuthenticationToken createSwitchUserToken(HttpServletRequest request,
                                                                       UserDetails targetUser) {
-        Authentication authentication = this.securityContextHolderStrategy.getContext().getAuthentication();
-        GrantedAuthority switchAuthority = new SwitchUserGrantedAuthority("ADMIN",
-                authentication);
-        Collection<? extends GrantedAuthority> orig = targetUser.getAuthorities();
-        List<GrantedAuthority> newAuths = new ArrayList<>(orig);
-        newAuths.add(switchAuthority);
+        List<GrantedAuthority> switchUserAuthoritiesList = getMergedGrantedAuthorities(targetUser);
         UsernamePasswordAuthenticationToken targetUserRequest =
                 UsernamePasswordAuthenticationToken.authenticated(targetUser, targetUser.getPassword(),
-                        newAuths);
+                        switchUserAuthoritiesList);
         WebAuthenticationDetailsSource webAuthenticationDetailsSource = new WebAuthenticationDetailsSource();
         targetUserRequest.setDetails(webAuthenticationDetailsSource.buildDetails(request));
         return targetUserRequest;
+    }
+
+    /**
+     * Merges the granted authorities of the target user with the current user's granted authorities.
+     * @param targetUser the target user to impersonate
+     * @return a list of merged granted authorities
+     */
+    private List<GrantedAuthority> getMergedGrantedAuthorities(UserDetails targetUser) {
+        Authentication currentAuthentication = this.securityContextHolderStrategy.getContext().getAuthentication();
+
+        Collection<? extends GrantedAuthority> switchUserAuthorities = targetUser.getAuthorities();
+        List<GrantedAuthority> switchUserAuthoritiesList = new ArrayList<>(switchUserAuthorities);
+        for (GrantedAuthority authority : currentAuthentication.getAuthorities()) {
+            GrantedAuthority currentUserAuthorities = new SwitchUserGrantedAuthority(authority.getAuthority(),
+                    currentAuthentication);
+            switchUserAuthoritiesList.add(currentUserAuthorities);
+        }
+        return switchUserAuthoritiesList;
     }
 
     private void updateUserName(UserDetails targetUser) {
@@ -152,16 +160,17 @@ public class MainLayout extends AppLayout {
         }
     }
 
-    private Authentication getSourceAuthentication(Authentication current) {
+    private Authentication getOriginalAuthentication(Authentication currentAuthentication) {
         Authentication original = null;
-        // iterate over granted authorities and find the 'switch user' authority
-        Collection<? extends GrantedAuthority> authorities = current.getAuthorities();
-        for (GrantedAuthority auth : authorities) {
-            // check for switch user type of authority
-            if (auth instanceof SwitchUserGrantedAuthority) {
-                original = ((SwitchUserGrantedAuthority) auth).getSource();
+        // iterate over granted authorities and find the 'switch user' authentications
+        Collection<? extends GrantedAuthority> authenticationAuthorities = currentAuthentication.getAuthorities();
+        for (GrantedAuthority grantedAuthority : authenticationAuthorities) {
+            // return original Authentication that is mapped to any SwitchUserGrantedAuthority
+            // (expected that all SwitchUserGrantedAuthority are mapped to a single Authentication)
+            if (grantedAuthority instanceof SwitchUserGrantedAuthority) {
+                return ((SwitchUserGrantedAuthority) grantedAuthority).getSource();
             }
         }
-        return original;
+        return null;
     }
 }
