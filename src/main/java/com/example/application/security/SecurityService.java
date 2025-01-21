@@ -25,6 +25,18 @@ public class SecurityService {
         return null;
     }
 
+    public static UserDetails getAnonymousUser() {
+        return org.springframework.security.core.userdetails.User
+                .withUsername("anonymousUser")
+                .password("") // Password is not relevant for anonymous user
+                .authorities("ROLE_ANONYMOUS") // Anonymous authority
+                .accountExpired(false)
+                .accountLocked(false)
+                .credentialsExpired(false)
+                .disabled(false)
+                .build();
+    }
+
     public void logout() {
         UI.getCurrent().getPage().setLocation(LOGOUT_SUCCESS_URL);
         SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();

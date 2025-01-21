@@ -21,7 +21,7 @@ import javax.annotation.security.RolesAllowed;
 
 @Component
 @Scope("prototype")
-@Route(value="", layout = MainLayout.class)
+@Route(value="list", layout = MainLayout.class)
 @PageTitle("Contacts | Vaadin CRM")
 @RolesAllowed("ROLE_USER")
 public class ListView extends VerticalLayout {

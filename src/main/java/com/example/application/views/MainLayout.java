@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import com.example.application.security.SecurityService;
 import com.example.application.views.list.ListView;
@@ -14,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -23,8 +25,10 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -76,10 +80,23 @@ public class MainLayout extends AppLayout {
             impersonate(user, (VaadinServletRequest) VaadinRequest.getCurrent());
         });
 
+        impersonate.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        impersonate.setIcon(VaadinIcon.USER.create());
+
+        Button impersonateAnonymous = new Button("Impersonate anonymous", e -> {
+            UserDetails anonymous = SecurityService.getAnonymousUser();
+            impersonate(anonymous, (VaadinServletRequest) VaadinRequest.getCurrent());
+        });
+
+        impersonateAnonymous.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        impersonateAnonymous.setIcon(VaadinIcon.QUESTION.create());
+
         Button exitImpersonation = new Button("Exit impersonation", e ->
                 exitImpersonated());
 
-        header.add(impersonate, exitImpersonation);
+        exitImpersonation.addThemeVariants(ButtonVariant.LUMO_ERROR);
+
+        header.add(impersonate, impersonateAnonymous, exitImpersonation);
 
 
         addToNavbar(header);
@@ -89,6 +106,9 @@ public class MainLayout extends AppLayout {
     private void updateDrawer() {
 
         menuItems.removeAll();
+
+        RouterLink publicLink = new RouterLink("Home", PublicView.class);
+        menuItems.add(publicLink);
 
         if (SecurityService.userInRole("ROLE_ADMIN")) {
             RouterLink dashboardLink = new RouterLink("Dashboard", DashboardView.class);
@@ -108,19 +128,17 @@ public class MainLayout extends AppLayout {
         SecurityContext context = this.securityContextHolderStrategy.createEmptyContext();
         context.setAuthentication(targetUserRequest);
         this.securityContextHolderStrategy.setContext(context);
-        UI.getCurrent().getPage().setLocation("/");
+        UI.getCurrent().getPage().setLocation("/list");
     }
 
     private void exitImpersonated() {
         Authentication current = this.securityContextHolderStrategy.getContext().getAuthentication();
-        if (current == null) {
-            throw new RuntimeException("Cannot exit impersonation: no current user");
-        }
-        Authentication original = getOriginalAuthentication(current);
+        Authentication original = getOriginalAuthentication(current).orElseThrow(
+                () -> new RuntimeException("Impersonated anonymous user"));
         SecurityContext context = this.securityContextHolderStrategy.createEmptyContext();
         context.setAuthentication(original);
         this.securityContextHolderStrategy.setContext(context);
-        UI.getCurrent().getPage().setLocation("/dashboard");
+        UI.getCurrent().getPage().setLocation("/");
     }
 
     private UsernamePasswordAuthenticationToken createSwitchUserToken(HttpServletRequest request,
@@ -141,9 +159,11 @@ public class MainLayout extends AppLayout {
      */
     private List<GrantedAuthority> getMergedGrantedAuthorities(UserDetails targetUser) {
         Authentication currentAuthentication = this.securityContextHolderStrategy.getContext().getAuthentication();
-
-        Collection<? extends GrantedAuthority> switchUserAuthorities = targetUser.getAuthorities();
-        List<GrantedAuthority> switchUserAuthoritiesList = new ArrayList<>(switchUserAuthorities);
+        if (currentAuthentication == null) {
+            throw new RuntimeException("Trying to impersonate without an existing authentication");
+        }
+        Collection<? extends GrantedAuthority> targetUserAuthorities = targetUser.getAuthorities();
+        List<GrantedAuthority> switchUserAuthoritiesList = new ArrayList<>(targetUserAuthorities);
         for (GrantedAuthority authority : currentAuthentication.getAuthorities()) {
             GrantedAuthority currentUserAuthorities = new SwitchUserGrantedAuthority(authority.getAuthority(),
                     currentAuthentication);
@@ -152,25 +172,24 @@ public class MainLayout extends AppLayout {
         return switchUserAuthoritiesList;
     }
 
-    private void updateUserName(UserDetails targetUser) {
-        if (targetUser != null) {
-            helloUser.setText("Welcome, " + targetUser.getUsername() + "!");
-        } else {
-            helloUser.setText("Welcome, Anonymous!");
-        }
-    }
-
-    private Authentication getOriginalAuthentication(Authentication currentAuthentication) {
-        Authentication original = null;
+    private Optional<Authentication> getOriginalAuthentication(Authentication currentAuthentication) {
         // iterate over granted authorities and find the 'switch user' authentications
         Collection<? extends GrantedAuthority> authenticationAuthorities = currentAuthentication.getAuthorities();
         for (GrantedAuthority grantedAuthority : authenticationAuthorities) {
             // return original Authentication that is mapped to any SwitchUserGrantedAuthority
             // (expected that all SwitchUserGrantedAuthority are mapped to a single Authentication)
             if (grantedAuthority instanceof SwitchUserGrantedAuthority) {
-                return ((SwitchUserGrantedAuthority) grantedAuthority).getSource();
+                return Optional.of(((SwitchUserGrantedAuthority) grantedAuthority).getSource());
             }
         }
-        return null;
+        return Optional.empty();
+    }
+
+    private void updateUserName(UserDetails targetUser) {
+        if (targetUser != null) {
+            helloUser.setText("Welcome, " + targetUser.getUsername() + "!");
+        } else {
+            helloUser.setText("Welcome, Anonymous!");
+        }
     }
 }
