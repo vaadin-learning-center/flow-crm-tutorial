@@ -9,15 +9,15 @@
     <packaging>jar</packaging>
 
     <properties>
-        <java.version>11</java.version>
-        <vaadin.version>23.5.14</vaadin.version>
+        <java.version>17</java.version>
+        <vaadin.version>24.6.3</vaadin.version>
         <selenium.version>4.16.1</selenium.version>
     </properties>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.18</version>
+        <version>3.4.2</version>
     </parent>
 
     <repositories>

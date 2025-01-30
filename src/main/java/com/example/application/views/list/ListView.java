@@ -15,8 +15,7 @@ import com.vaadin.flow.router.Route;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
+import jakarta.annotation.security.RolesAllowed;
 
 
 @Component

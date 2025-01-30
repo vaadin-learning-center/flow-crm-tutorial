@@ -1,6 +1,6 @@
 package com.example.application.views;
 
-import javax.annotation.security.RolesAllowed;
+import jakarta.annotation.security.RolesAllowed;
 
 import com.example.application.data.service.CrmService;
 
