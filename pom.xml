@@ -10,7 +10,7 @@
     <packaging>jar</packaging>
 
     <properties>
-        <vaadin.version>14.12.5</vaadin.version>
+        <vaadin.version>14.12.6</vaadin.version>
     </properties>
 
     <parent>
